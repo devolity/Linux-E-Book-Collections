@@ -1,0 +1,3 @@
+To download the latest version of OpenLDAP navigate to
+
+http://www.openldap.org/software/download/

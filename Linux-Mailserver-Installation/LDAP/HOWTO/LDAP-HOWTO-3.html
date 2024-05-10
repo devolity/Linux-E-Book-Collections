@@ -1,0 +1,421 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+ <META NAME="GENERATOR" CONTENT="SGML-Tools 1.0.9">
+ <TITLE>LDAP Linux HOWTO: Configuring the LDAP Server</TITLE>
+ <LINK HREF="LDAP-HOWTO-4.html" REL=next>
+ <LINK HREF="LDAP-HOWTO-2.html" REL=previous>
+ <LINK HREF="LDAP-HOWTO.html#toc3" REL=contents>
+</HEAD>
+<BODY>
+<A HREF="LDAP-HOWTO-4.html">Next</A>
+<A HREF="LDAP-HOWTO-2.html">Previous</A>
+<A HREF="LDAP-HOWTO.html#toc3">Contents</A>
+<HR>
+<H2><A NAME="3"></A> <A NAME="s3">3. Configuring the LDAP Server</A></H2>
+
+<P>Once the software has been installed and built, you are ready to configure it for use at your site. All slapd runtime configuration is accomplished through the slapd.conf file,
+installed in the prefix directory you specified in the configuration script or by default in /usr/local/etc/openldap. 
+<P>In this directory you will also find the files <I>slapd.oc.conf</I> and <I>slapd.at.conf</I> which are
+included on the slad.conf file (see include option on 
+<A HREF="#3.2">section 3.2</A>) and that hold respectively the objectclasses and attributes definitions for the LDAP database backend. 
+Next comes a description of the general format of the config file, followed by a detailed description of each config file option. 
+<P>
+<H2><A NAME="ss3.1">3.1 Configuration File Format</A>
+</H2>
+
+<P>The slapd.conf file consists of a series of global configuration options that apply to slapd as a whole (including all database backends), followed by zero or more database
+backend definitions that contain information specific to a backend instance. 
+<P>Global options can be overridden in a backend (for options that appear more than once, the last appearance in the slapd.conf file is used). Blank lines and comment lines
+beginning with a ``#'' character are ignored. If a line begins with white space, it is considered a continuation of the previous line. The general format of slapd.conf is as follows: 
+<BLOCKQUOTE><CODE>
+<PRE>
+     # comment - these options apply to every database 
+     &lt;global config options&gt; 
+     # first database definition &amp; config options 
+     database &lt;backend 1 type&gt; 
+     &lt;config options specific to backend 1&gt; 
+     # second database definition &amp; config options 
+     database &lt;backend 2 type&gt; 
+     &lt;config options specific to backend 2&gt; 
+     # subsequent database definitions &amp; config options 
+     ... 
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>Configuration line arguments are separated by white space. If an argument contains white space, the argument should be enclosed in double quotes "like this". If an argument
+contains a double quote or a backslash character `\', the character should be preceded by a backslash character `\', (e.g. `\\d').. 
+<P>The distribution contains an example configuration file that will be installed in the configuration prefix directory. Also provided are slapd.at.conf, which contains many commonly
+used attribute definitions, and slapd.oc.conf, which contains many commonly used object class definitions. 
+<P>
+<H2><A NAME="3.2"></A> <A NAME="ss3.2">3.2 Global Options</A>
+</H2>
+
+<P>Options described in this section apply to all backends, unless specifically overridden in a backend definition. Option arguments that should be replaced by actual text are shown
+in brackets &lt;&gt;. 
+<P>access to &lt;what&gt; [ by &lt;who&gt; &lt;accesslevel&gt; ]+ 
+<BLOCKQUOTE><CODE>
+<PRE>
+This option grants access (specified by &lt;accesslevel&gt;) to a set of entries and/or attributes (specified by 
+&lt;what&gt;) by one or more requesters (specified by &lt;who&gt;). See the Access Control Examples for more details. 
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>attribute &lt;name&gt; [&lt;name2&gt;] { bin | ces | cis | tel | dn } 
+<BLOCKQUOTE><CODE>
+<PRE>
+This option associates a syntax with an attribute name. By default, an attribute is assumed to have 
+syntax cis. An optional alternate name can be given for an attribute. The possible syntaxes and their 
+meanings are :
+
+bin : binary 
+ces : case exact string (case must match during comparisons) 
+cis : case ignore string (case is ignored during comparisons) 
+tel : telephone number string (like cis but blanks and dashes `-' are ignored during comparisons) 
+dn : distinguished name 
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>defaultaccess { none | compare | search | read | write } 
+<BLOCKQUOTE><CODE>
+<PRE>
+This option specifies the default access to grant requesters not matched by any other access line (take a look on
+Access Control examples down). Note that an access level implies all lesser access levels (e.g., write access 
+implies read, search and compare). 
+Default: 
+defaultaccess read 
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>include &lt;filename&gt;
+<BLOCKQUOTE><CODE>
+<PRE>
+This option specifies that slapd should read additional configuration information from the given file before 
+continuing with the next line of the current file. The included file should follow the normal slapd config file 
+format. You can use this option to include the files that contain the objectclass and attribute definitions of 
+your backend database. The LDAP software package comes with the files slapd.oc.conf and slapd.at.conf 
+
+Note: You should be careful when using this option - there is no small limit on the number of nested include 
+options, and no loop detection is done. 
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>loglevel &lt;integer&gt; 
+<BLOCKQUOTE><CODE>
+<PRE>
+This option specifies the level at which debugging statements and operation statistics should be syslogged 
+(currently logged to the syslogd(8) LOCAL4 facility). You must have 
+compiled slapd with - DLDAP_DEBUG for this to work (except for the two stats levels, which are always enabled).
+Log levels are additive. To display what numbers correspond to what kind of debugging, invoke slapd with 
+the - ? flag or consult the table below. The possible values for &lt;integer&gt; are: 
+
+1 trace function calls 
+2 debug packet handling 
+4 heavy trace debugging 
+8 connection management 
+16 print out packets sent and received 
+32 search filter processing 
+64 configuration file processing 
+128 access control list processing 
+256 stats log connections/operations/results 
+512 stats log entries sent 
+1024 print communication with shell backends 
+2048 print entry parsing debugging 
+
+Example: 
+loglevel 255 
+This will cause lots and lots of debugging information to be syslogged. 
+Default: 
+loglevel 256 
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>objectclass &lt;name&gt; 
+[ requires &lt;attrs&gt; ] 
+[ allows &lt;attrs&gt; ] 
+<BLOCKQUOTE><CODE>
+<PRE>
+This option defines the schema rules for the given object class. Used in conjunction with the schemacheck
+ option. 
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>referral &lt;url&gt; 
+<BLOCKQUOTE><CODE>
+<PRE>
+This option specifies the referral to pass back when slapd cannot find a local database to handle a request. 
+Example: 
+referral ldap://ldap.itd.umich.edu 
+This will refer non-local queries to the LDAP server at the University of Michigan. Smart LDAP clients can
+re-ask their query at that server, but note that most of these clients are only going to know how to handle
+simple LDAP URLs that contain a host part and optionally a distinguished name part. 
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>schemacheck { on | off } 
+<BLOCKQUOTE><CODE>
+<PRE>
+This option turns schema checking on or off. If schema checking is on, entries added or modified will be 
+checked to ensure they obey the schema rules implied by their object class(es) as defined by the corresponding 
+objectclass option(s). If schema checking is off this check is not done. 
+Default: 
+schemacheck off 
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>sizelimit &lt;integer&gt; 
+<BLOCKQUOTE><CODE>
+<PRE>
+This option specifies the maximum number of entries to return from a search operation. 
+Default: 
+sizelimit 500 
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>srvtab &lt;filename&gt;
+<BLOCKQUOTE><CODE>
+<PRE>
+This option specifies the srvtab file in which slapd can find the kerberos keys necessary for authenticating 
+clients using kerberos. This option is only meaningful if you are using kerberos authentication, which must 
+be enabled at compile time by including the appropriate definitions in the Make-common file. 
+Default: 
+srvtab /etc/srvtab 
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>timelimit &lt;integer&gt;
+<BLOCKQUOTE><CODE>
+<PRE>
+This option specifies the maximum number of seconds (in real time) slapd will spend answering a search request.
+If a request is not finished in this time, a result indicating an exceeded timelimit will be returned. 
+Default: 
+timelimit 3600 
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>
+<H2><A NAME="ss3.3">3.3 General Backend Options</A>
+</H2>
+
+<P>Options in this section only apply to the backend in which they are defined. They are supported by every type of
+backend. 
+<P>database &lt;databasetype&gt;
+<BLOCKQUOTE><CODE>
+<PRE>
+This option marks the beginning of a new database instance definition. &lt;databasetype&gt; should be one of 
+ldbm, shell, or passwd, depending on which backend will serve the database. 
+Example: 
+database ldbm 
+This marks the beginning of a new LDBM backend database instance definition. 
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>lastmod { on | off } 
+<BLOCKQUOTE><CODE>
+<PRE>
+This option controls whether slapd will automatically maintain the modifiersName, modifyTimestamp, creatorsName,
+and createTimestamp attributes for entries. 
+Default: 
+lastmod off 
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>readonly { on | off } 
+<BLOCKQUOTE><CODE>
+<PRE>
+This option puts the database into "read-only" mode. Any attempts to modify the database will return an 
+"unwilling to perform" error. 
+Default: 
+readonly off 
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>replica host=&lt;hostname&gt;[:&lt;port&gt;] 
+"binddn=&lt;DN&gt;" 
+bindmethod={ simple | kerberos } 
+[credentials=&lt;password&gt;] 
+[srvtab=&lt;filename&gt;] 
+<BLOCKQUOTE><CODE>
+<PRE>
+This option specifies a replication site for this database. The host= parameter specifies a host and 
+optionally a port where the slave slapd instance can be found. Either a domain name or IP address may be
+used for &lt;hostname&gt;. If &lt;port&gt; is not given, the standard LDAP port number (389) is used. 
+The binddn parameter gives the DN to bind as for updates to the slave slapd. It should be a DN which has
+read/write access to the slave slapd's database, typically given as a "rootdn" in the slave's config file. 
+It must also match the updatedn option in the slave slapd's config file. Since DNs are likely to contain 
+embedded spaces, the entire "binddn=&lt;DN&gt;" string should be enclosed in quotes. 
+bindmethod is either simple or kerberos, depending on whether simple password-based authentication or kerberos
+authentication is to be used when connecting to the slave slapd. Simple authentication requires a valid password
+be given. Kerberos authentication requires a valid srvtab file. 
+The credentials= parameter, which is only required if using simple authentication, gives the password for 
+binddn on the slave slapd. 
+The srvtab= parameter, which is only required if using kerberos, specifies the filename which holds the kerberos
+key for the slave slapd. If omitted, /etc/srvtab is used. 
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>replogfile &lt;filename&gt; 
+<BLOCKQUOTE><CODE>
+<PRE>
+This option specifies the name of the replication log file to which slapd will log changes. The replication log
+is typically written by slapd and read by slurpd. Normally, this option is only used if slurpd is being used 
+to replicate the database. However, you can also use it to generate a transaction log, if slurpd is not running.
+In this case, you will need to periodically truncate the file, since it will grow indefinitely otherwise. 
+</PRE>
+</CODE></BLOCKQUOTE>
+   
+<P>rootdn &lt;dn&gt; 
+<BLOCKQUOTE><CODE>
+<PRE>
+This option specifies the DN of an entry that is not subject to access control or administrative limit restrictions
+for operations on this database. 
+Example: 
+rootdn "cn=Manager, o=U of M, c=US" 
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>rootkrbname &lt;kerberosname&gt; 
+<BLOCKQUOTE><CODE>
+<PRE>
+This option specifies a kerberos name for the DN given above that will always work, regardless of whether an
+entry with the given DN exists or has a krbName attribute. This option is usefull when creating a database and 
+also when using slurpd to provide replication service. 
+Example: 
+rootkrbname admin@umich.edu 
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>rootpw &lt;password&gt; 
+<BLOCKQUOTE><CODE>
+<PRE>
+This option specifies a password for the DN given above that will always work, regardless of whether an entry
+with the given DN exists or has a password. This option is usefull when creating a database and also when using
+slurpd to provide replication service. Avoid having cleartext password on this option. At least provide an 
+crypto (you can use an entry of Unix /etc/passwd file) password. Slapd supports other types of encryption 
+methods too. 
+Example: 
+rootpw secret 
+rootpw {crypto}encrypted_password_here 
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>suffix &lt;dn suffix&gt; 
+<BLOCKQUOTE><CODE>
+<PRE>
+This option specifies the DN suffix of queries that will be passed to this backend database. Multiple suffix 
+lines can be given, and at least one is required for each database definition. 
+Example: 
+suffix "o=University of Michigan, c=US" 
+Queries with a DN ending in "o=University of Michigan, c=US" will be passed to this backend. 
+Note: when the backend to pass a query to is selected, slapd looks at the suffix line(s) in each database 
+definition in the order they appear in the file. Thus, if one database suffix is a prefix of another, it 
+must appear after it in the config file. 
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>updatedn &lt;dn&gt; 
+<BLOCKQUOTE><CODE>
+<PRE>
+This option is only applicable in a slave slapd. It specifies the DN allowed to make changes to the replica
+(typically, this is the DN slurpd binds as when making changes to the replica). 
+</PRE>
+</CODE></BLOCKQUOTE>
+<H2><A NAME="ss3.4">3.4 LDBM Backend-Specific Options</A>
+</H2>
+
+<P>Options in this category only apply to the LDBM backend database. That is, they must follow a "database ldbm"
+line and come before any other "database" line. 
+<P>cachesize &lt;integer&gt; 
+<BLOCKQUOTE><CODE>
+<PRE>
+This option specifies the size in entries of the in-memory cache maintained by the LDBM backend database 
+instance. 
+Default: 
+cachesize 1000 
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>dbcachesize &lt;integer&gt; 
+<BLOCKQUOTE><CODE>
+<PRE>
+This option specifies the size in bytes of the in-memory cache associated with each open index file. If not
+supported by the underlying database method, this option is ignored without comment. Increasing this number
+uses more memory but can cause a dramatic performance increase, especially during modifies or when building 
+indexes. 
+Default: 
+dbcachesize 100000 
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>directory &lt;directory&gt; 
+<BLOCKQUOTE><CODE>
+<PRE>
+This option specifies the directory where the LDBM files containing the database and associated indexes live. 
+Default: 
+directory /usr/tmp 
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>index {&lt;attrlist&gt; | default} [pres,eq,approx,sub,none] 
+<BLOCKQUOTE><CODE>
+<PRE>
+This option specifies the indexes to maintain for the given attribute. If only an &lt;attrlist&gt; is given,
+all possible indexes are maintained. 
+Example: 
+index cn 
+index sn,uid eq,sub,approx 
+index default none 
+
+This example causes all indexes to be maintained for the cn attribute; equality, substring, and approximate 
+indexes for the sn and uid attributes; and no indexes for all other attributes. 
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>mode &lt;integer&gt; 
+<BLOCKQUOTE><CODE>
+<PRE>
+This option specifies the file protection mode that newly created database index files should have. 
+Default: 
+mode 0600 
+</PRE>
+</CODE></BLOCKQUOTE>
+<H2><A NAME="bla"></A> <A NAME="ss3.5">3.5 Access Control Examples </A>
+</H2>
+
+<P>The access control facility presented on 
+<A HREF="#3.2">section 3.2</A> is quite powerful. This section shows some examples of 
+its use. First, some simple examples: 
+<BLOCKQUOTE><CODE>
+<PRE>
+access to * by * read 
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>This access directive grants read access to everyone. If it appears alone it is the same as the following defaultaccess line. 
+<BLOCKQUOTE><CODE>
+<PRE>
+defaultaccess read 
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>The following example shows the use of a regular expression to select the entries by DN in two access directives where ordering is significant. 
+<BLOCKQUOTE><CODE>
+<PRE>
+access to dn=".*, o=U of M, c=US" 
+by * search 
+access to dn=".*, c=US" 
+by * read 
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>Read access is granted to entries under the c=US subtree, except for those entries under the "o=University of Michigan, c=US" subtree, to which search access is granted. If
+the order of these access directives was reversed, the U-M-specific directive would never be matched, since all U-M entries are also c=US entries. 
+<P>The next example again shows the importance of ordering, both of the access directives and the "by" clauses. It also shows the use of an attribute selector to grant access to a
+specific attribute and various &lt;who&gt; selectors. 
+<BLOCKQUOTE><CODE>
+<PRE>
+access to dn=".*, o=U of M, c=US" attr=homePhone 
+by self write 
+by dn=".*, o=U of M, c=US" search 
+by domain=.*\.umich\.edu read 
+by * compare 
+access to dn=".*, o=U of M, c=US" 
+by self write 
+by dn=".*, o=U of M, c=US" search 
+by * none 
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>This example applies to entries in the "o=U of M, c=US" subtree. To all attributes except homePhone, the entry itself can write them, other U-M entries can search by them,
+anybody else has no access. The homePhone attribute is writable by the entry, searchable by other U-M entries, readable by clients connecting from somewhere in the
+umich.edu domain, and comparable by everybody else. 
+<P>Sometimes it is usefull to permit a particular DN to add or remove itself from an attribute. For example, if you would like to create a group and allow people too add and remove only
+their own DN from the member attribute, you could accomplish it with an access directive like this: 
+<BLOCKQUOTE><CODE>
+<PRE>
+access to attr=member,entry 
+by dnattr=member selfwrite 
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>The dnattr &lt;who&gt; selector says that the access applies to entries listed in the member attribute. The selfwrite access selector says that such members can only add or delete
+their own DN from the attribute, not other values. The addition of the entry attribute is required because access to the entry is required to access any of the entry's attributes. 
+<P>Note that the attr=member construct in the &lt;what&gt; clause is a shorthand for the clause "dn=* attr=member" (i.e., it matches the member attribute in all entries). 
+<P>
+<HR>
+<A HREF="LDAP-HOWTO-4.html">Next</A>
+<A HREF="LDAP-HOWTO-2.html">Previous</A>
+<A HREF="LDAP-HOWTO.html#toc3">Contents</A>
+</BODY>
+</HTML>

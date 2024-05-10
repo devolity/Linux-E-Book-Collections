@@ -1,0 +1,7 @@
+To download the latest version of the imap daemon from the University of Washington navigate to
+
+ftp://ftp.cac.washington.edu/imap/
+
+and download the file
+
+imap.tar.Z

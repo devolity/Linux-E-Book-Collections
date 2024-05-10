@@ -1,0 +1,30 @@
+$TTL	86400
+
+@	IN	SOA	organicbrownsugar.com.	hostmaster.organicbrownsugar.com. (
+				20001103001
+				10800
+				1800
+				1209600
+				604800 )
+
+		IN	NS	email.organicbrownsugar.com.
+		IN	MX	10	email.organicbrownsugar.com.
+
+email		IN	A	192.10.1.10
+
+;These are just other names for our server. Make sure you never reference to these
+;names but to the original one, email.organicbrownsugar.com.
+ftp		IN	CNAME	email;
+telnet	IN	CNAME	email;
+smtp		IN	CNAME	email;
+mail		IN	CNAME	email;
+mailhost	IN	CNAME	email;
+mailbox	IN	CNAME	email;
+ns		IN	CNAME	email;
+ns1		IN	CNAME	email;
+http		IN	CNAME	email;
+pop		IN	CNAME	email;
+pop3		IN	CNAME	email;
+imap		IN	CNAME	email;
+ldap		IN	CNAME	email;
+www		IN	CNAME	email;

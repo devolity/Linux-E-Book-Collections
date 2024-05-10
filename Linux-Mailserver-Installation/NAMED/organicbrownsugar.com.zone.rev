@@ -1,0 +1,15 @@
+$TTL	86400
+
+@	IN	SOA	1.10.192.in-addr.arpa.	hostmaster..organicbrownsugar.com. (
+				20001103001
+				10800
+				1800
+				1209600
+				604800 )
+
+		IN	NS	email.organicbrownsugar.com.
+10		IN	PTR	email.organicbrownsugar.com.
+
+150		IN	PTR	winpc150.organicbrownsugar.com.
+151		IN	PTR	winpc151.organicbrownsugar.com.
+

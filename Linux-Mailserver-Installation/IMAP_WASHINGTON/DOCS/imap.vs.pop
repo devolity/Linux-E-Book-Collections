@@ -1,0 +1,695 @@
+Written: 95.08.28         ftp://ftp.cac.washington.edu/mail/imap.vs.pop
+Revised: 95.09.28
+
+
+               Message Access Paradigms and Protocols
+
+                            Terry Gray
+             Director, Networks & Distributed Computing
+                     University of Washington
+
+                      gray@cac.washington.edu
+
+
+
+I. EXECUTIVE SUMMARY
+
+This paper is an elaboration on a short note entitled "Comparing Two Approaches
+to Remote Mailbox Access: IMAP vs. POP", which was written in 1993 and recently
+updated. The purpose of this paper is to provide more extensive background on
+message access paradigms and protocols, and then to specifically compare the
+Internet's Post Office Protocol (POP) and the Internet Message Access Protocol
+(IMAP) in the context of "online" operation. 
+
+There are three different paradigms for accessing remote message stores (or
+"mailboxes").  They are: offline, online, and disconnected.  In "offline"
+operation, the mail client program, or "mail user agent" (MUA), fetches
+messages from a mail server to the machine where the mail program is
+running, and then deletes them from the server.  In "online" operation,
+messages are left on the mail server and manipulated remotely by mail
+client programs.  In "disconnected" operation, a mail client connects to
+the mail server, makes a "cache" copy of selected messages, and then
+disconnects from the server, later to reconnect and resynchronize with the
+server.  In both online and disconnected access modes, mail is left on the
+server, which is important when people use different computers at different
+times to access their messages. 
+
+Any one of several client-server protocols could be used to access a remote
+message store, including general purpose file access protocols (e.g. NFS)
+and various application-specific protocols --some vendor-proprietary, others
+more open.  Each protocol has its strengths and weaknesses, but for
+purposes of this discussion, the only two of interest are the Internet's
+Post Office Protocol (POP) and the Internet Message Access Protocol (IMAP). 
+Both of these protocols fully support the offline operation model. If one's
+only requirement is for offline access, then IMAP is overkill.  
+
+It is the thesis of this paper that (a) supporting online and disconnected
+access is essential for a growing fraction of mail users, and (b) POP is
+inadequate for proper online and disconnected support, whereas IMAP does a
+good job for all three message access paradigms.  This is not an
+indictment of POP, since POP is entirely satisfactory for its intended
+design center of offline mail processing.  Rather, it is an explanation of
+the importance of online and disconnected operation, and why IMAP is a
+much better answer for those access modes. 
+	
+Here are some of the functions, important for online and disconnected 
+access, that are available in IMAP but not in POP:
+
+Remote Folder Manipulation:
+ o Ability to append messages to a remote folder.
+ o Ability to set standard and user-defined message status flags.
+ o Support for simultaneous update and update discovery in shared folders.
+ o New mail notification.
+
+Multiple folder support:
+ o Ability to manipulate remote folders other than INBOX.
+ o Remote folder management (list/create/delete/rename).
+ o Support for folder hierarchies.
+ o Suitable for accessing non-email data; e.g., NetNews, documents.
+
+Online performance optimization:
+ o Provision for determining message structure without downloading entire msg.
+ o Selective fetching of individual MIME body parts.
+ o Server-based searching and selection to minimize data transfer.
+
+Some of these capabilities are particularly important when one is connected
+to a server at low-speeds, e.g. via wireless phone links.  Indeed, they may
+make the difference between usability and frustration. 
+
+Finally, IMAP has provision for negotiated extensions, and therefore 
+its capabilities can grow incrementally to meet new requirements.
+
+Our conclusions, then, are that a) messaging technology that only offers
+offline access alone is inadequate for contemporary needs; b) IMAP
+provides superior online and disconnected support, in addition to support
+for offline operation; c) an application-specific protocol such as IMAP
+offers important advantages over generic file-system protocols, and d)
+since IMAP is a functional superset of POP, the only real advantage of POP
+over IMAP is that there is currently more software available for POP. 
+
+
+II. MESSAGE ACCESS PARADIGMS
+
+In the early days of email, messages were typically delivered to a single
+time-sharing machine within an organization, and everyone would login to that
+machine to read their email.  While this model is still widely used, it has two
+serious limitations: first, it does not scale very well to accommodate growing
+user populations, and second, it does not allow use of native Mac or PC
+messaging applications.  The first point is primarily of concern to system
+managers, but the second issue directly affects the usability of the system,
+both in terms of providing a graphical user-interface look/feel common with
+other personal productivity tools, and also in order to make it easy to
+import/export data between the mail system and the desktop or laptop machine. 
+
+Accordingly, a distributed messaging architecture that accommodates personal
+computer usage paradigms is of interest.  However, before considering specific
+client-server protocols to support such an architecture, it is important to
+understand the different ways messaging clients and servers might be used. 
+
+The Internet document RFC-1733 defines three modes of operation, or 
+message access paradigms, in a distributed messaging system:
+
+ o Offline
+ o Online
+ o Disconnected
+
+In "offline" operation, messages are delivered to a (typically shared) server 
+and a workstation or personal computer user periodically connects to the server
+and downloads all of the pending messages to the "client" machine.  More
+precisely, the mail client program, or "mail user agent" (MUA), fetches
+messages from the server to the machine where the mail program is running,
+and then deletes them from the server.  Thereafter, all message processing
+is local to the client machine.  
+
+In "online" operation, messages are left on the mail server and
+manipulated remotely by mail client programs --possibly more than one at a
+time, and probably more than one at different times. 
+
+In "disconnected" operation, a mail client connects to the mail server,
+makes a "cache" copy of selected messages, and then disconnects from the
+server, later to reconnect and resynchronize with the server.  The user
+may then operate on the message cache "offline", but this model differs
+from the pure "offline" model in that the primary copy of messages remains
+on the server, and the mail client program will subsequently re-connect to
+the server and re-synchronize message status between the server and the
+client's message cache.  Online and disconnected operation complement each
+other and one may alternate between them; however, neither is compatible
+with offline operation since, by definition, offline operation implies
+deleting the messages from the server after they've been copied to the
+client machine's local disk. 
+
+You can think of offline operation as providing a store-and-forward
+service, where the last hop transmission is initiated by the user via a
+mail program on the final destination host.  It is intended to move mail
+(on demand) from an intermediate server (drop point) to a single
+destination machine, usually a PC or Mac. Once successfully delivered to
+the user's machine, the messages are deleted from the mail server. 
+
+The offline model shines when a person always accesses their mail from a
+single computer and is content to have the primary copy of their messages
+live on that single machine.  If, however, one needs to access their message
+store from different computers at different times, or if they wish to keep
+the message store* on a different machine than the one they directly
+interact with, then the offline model is inappropriate.  
+
+A growing fraction of email users have one machine at work and a different one
+at home, and possibly also a laptop for travel.  We feel that such users would,
+if given a choice, prefer online and disconnected access, and would choose
+offline access only when connect time and/or server resources are at a premium. 
+And while online access does imply longer connect times than offline, 
+disconnected use requires roughly the same connect times as offline access.
+A preference for offline access can not be inferred from its present market
+share, because much of the user community has never been offered the choice. 
+
+* Note: the terms "message store", "mailbox", and "folder" are used
+  almost interchangeably in this paper, although a "message store" 
+  might contain more than one "mailbox" or "mail folder".
+
+
+III. MESSAGE ACCESS PROTOCOLS
+
+Most people do not have messages delivered directly to a personal computer, and
+instead rely upon an "always up" mail server, which is usually shared by others
+in the organization.  Whenever mail is delivered to one machine but read on a
+different one, there is a need for a network protocol to access the messages on
+the server machine.  Once a policy decision is made on where someone's message
+data is going to permanently reside, i.e. on a personal, workgroup,
+departmental, or central server, then the question becomes: which protocol
+should be used to access the message data when using a *different* machine? 
+The question applies both to incoming message folders (e.g. one's primary
+INBOX) and also one's saved-message folders.  When reading incoming message
+folders, a common operation is to save a message to an archive folder, so both
+data sets must be available simultaneously.  It is not a requirement that the
+same protocol be used to access both classes of messages, but in most cases it
+makes sense to do so. 
+
+Protocol choices include:
+
+ o Generic remote file system access protocols (e.g. NFS, SMB)
+ o Application-specific message access protocols (e.g. POP, IMAP)
+
+Although it is tempting to think that a remote file system protocol is 
+the best solution to the problem of accessing remote message stores, there 
+are some problems with that strategy:
+
+ o There is no single file system protocol universally available on 
+   all types of computers.
+
+ o File system protocols are tightly bound to the operating system and
+   installation can sometimes be invasive.
+
+ o Most file system protocols can not address newline and/or record convention 
+   differences between operating systems since the server file systems are
+   usually not "typed" and therefore it is impossible for a generic file access
+   protocol to reliably determine when to apply conversions.  Thus, the
+   mail client program is tied to (and must be aware of) the specific storage
+   format on the server.
+
+ o File locking and security issues have proven to be problematic in
+   some file access protocols.
+
+ o Reliance on file system protocols can lead to inefficient use of network 
+   bandwidth, as when, for example, entire files must be transferred over the
+   net in order to determine the presence or absence of a particular string. 
+
+In contrast, an application-specific protocol can:
+
+ o Be tailored to maximize performance within a specific application domain.
+
+ o Allow for a logical split of processing between client and server in order
+   to minimize data transmitted across the network.
+
+ o Often be installed without special privileges.
+
+ o Insulate the client program from the file format used on the server.
+
+Hence, use of an application-specific protocol is preferred.  Within that 
+category, the choices are:
+
+ o A proprietary/vendor-specific solution, 
+ o The X.400 P7 message access protocol,
+ o One of three Internet message access protocols.
+
+The proprietary approaches are herein summarily rejected for all the usual 
+reasons having to do with getting locked into a single-vendor solution.
+Moreover, these approaches inevitably lead to having email gateways to 
+the Internet, a perennial source of grief.
+
+The X.400 approach is also rejected, principally for two reasons: first, the P7
+protocol has some serious technical shortcomings, but more importantly, P7
+presumes X.400 message header and transport technology rather than Internet
+messaging technology.  X.400 technology condemns innocent users and system
+managers to dealing with the consequences of X.400 O/R addresses and gateways
+to the Internet --both of which we feel should be avoided at all costs. 
+(Comparison of Internet and X.400 messaging technology is beyond the scope of
+this paper, but suffice it to say the oft-heard claims that one cannot do
+large-scale, mission-critical messaging with Internet protocols are simply
+incorrect.)
+
+That leaves us with the Internet-oriented messaging protocols, of which 
+there are three:  POP, DMSP, and IMAP.
+
+Of the three, the oldest and best known is the Post Office Protocol (POP),
+which was originally defined in RFC-918 of October 1984.  Like the other
+two, POP has gone through several revisions since its first incarnation. 
+As of this writing, the current version is POP3 as described in RFC-1725,
+but there is an even later revision of POP3 pending as an Internet Draft.
+Recent additions include support for advanced authentication methods and
+unique message identifiers, both of which were derived from work on IMAP
+version 4.  POP was designed specifically to support the offline access 
+paradigm; however, with very significant limitations, it has also been 
+applied to the other two paradigms.
+
+The Distributed Mail System Protocol (DMSP) was first defined in RFC-984
+of May 1986.  The latest revision is in RFC-1056 of June 1988.  Unlike
+POP, DMSP has not been widely supported, and is largely limited to a
+single application, PCMAIL.  DMSP was designed specifically to accommodate,
+and is best known for, the disconnected operation support in PCMAIL.
+
+The Internet Message Access Protocol (IMAP) dates to 1986 at Stanford
+University, though it was not documented until RFC-1064 of July 1988. It, too,
+has seen several revisions since then, with IMAP4 (described in RFC-1730) being
+the current version.  IMAP was originally designed to support the online access
+model; indeed, "IMAP" once stood for "Interactive Mail Access Protocol", but
+the name was changed in 1993 as part of the IETF standardization effort in
+order to better reflect IMAP's current capabilities.  Since IMAP is a
+functional --though not syntactic-- superset of POP capabilities, it can fully
+support offline access as well as POP does, and with additions made in version
+4 it can also support disconnected operation. IMAP has therefore subsumed the
+functionality of both POP and DMSP. 
+
+The remainder of this paper will focus on comparing the two principal
+message access protocols, POP and IMAP, especially with respect to their
+use in online and disconnected operation. 
+
+
+IV. PROTOCOL REQUIREMENTS FOR ONLINE AND DISCONNECTED OPERATION
+
+A proper online message access protocol must be able to manipulate remote message
+stores as if they were local. For the reasons cited earlier, a complete solution 
+requires that this be accomplished without reliance on general file system protocols.
+So if one were to design a protocol (or protocol family) to support a high-quality
+client-server messaging system, what capabilities would it need?  It would
+need to offer: 
+
+ o Offline, online, and disconnected operation.
+ o Nomadic (dataless) clients, without relying on remote file protocols.
+ o Sending, retrieving, and saving messages.
+ o Remote folder management.
+ o Retrieving and updating per-message status information.
+ o Retrieving and updating personal configuration information.
+ o Shared mailbox (multiple user) support.
+ o Online performance optimization.
+ o Full compatibility with relevant Internet standards to avoid having any 
+   mail gateways.
+
+In the Internet, sending messages is accomplished via the Simple Mail
+Transfer Protocol (SMTP).  Because SMTP is indeed simple, there is no
+particular advantage to duplicating this functionality in the message
+access protocol, and neither POP nor IMAP do so. Likewise, accessing and
+updating personal configuration information is relegated to a separate
+companion protocol.  In the case of IMAP, the configuration support
+protocol is called IMSP (Internet Message Support Protocol) and was
+developed at Carnegie Mellon University.  Hence, the focus of subsequent
+sections will be on remote folder access and manipulation capabilities, as
+well as performance considerations while clients and servers are
+connected. 
+
+Disconnected operation has all of the same requirements as online
+operation, plus it demands that messages in a particular folder be
+uniquely identifiable throughout the life of that folder.  This is so that
+clients and servers can periodically resynchronize the status of
+particular messages. 
+
+
+V. SIMILARITIES BETWEEN POP AND IMAP
+
+Although the protocols are not directly compatible and differ in 
+significant ways, there are some common characteristics.  Both of
+them:
+
+ o Handle mail *access* only; relying on SMTP for sending.
+ o Rely on mail delivery to a, usually shared, "always up" mail server.
+ o Allow access to new mail from a variety of client platform types.
+ o Allow access to new mail from anywhere on the network.
+ o Fully support the offline (download and delete) access model.
+ o Support persistent message identifiers for disconnected use.
+ o Have freely available implementations (including source) available.
+ o Have client implementations available for PCs, Macs, and Unix.
+ o Have commercial implementations available.
+ o Are open protocols, defined by Internet RFCs.
+ o Are native Internet protocols; no mail gateways required.
+
+
+VI. POP IN ONLINE MODE
+
+As customers and vendors of POP-based mailers encounter the limitations of
+the offline access paradigm, there has been interest in trying to use POP
+in both online and disconnected modes.  Usually this involves configuring 
+the POP mailer to "leave mail on server" rather than deleting it after
+copying the messages to the client machine.  However, POP has no provision 
+for several capabilities that are essential for a high-quality online 
+or disconnected client. These capabilities fall into three categories:
+
+ o Remote folder manipulation
+ o Multiple folder support
+ o Online performance optimization
+
+Even if POP is used in "pseudo online" mode, wherein messages are not
+deleted from the server, it cannot really be considered a proper protocol
+for online operation because a different (typically a remote file system)
+protocol must be used for certain online operations.
+
+One example of POP's limitations in online mode is updating per-message
+state information, e.g. marking a message as Answered.  Either the client
+mail program omits this important capability, or it must be done outside
+of POP, since POP has no primitives for this function.  Indeed, the
+per-message state information would typically have to be stored separately
+from the messages themselves and accessed as a local file in order for a
+POP client to update this data. 
+
+Another example would be saving a message to a personal archive folder. 
+Although it might seem that such saving is only done to a "local" file, in
+fact a key premise of client-server messaging is the need to use different
+clients at different times, and by definiton, the saved-message archives
+can't be local to more than one computer. 
+
+However, when POP is used in "pseudo-online" mode, its deficiencies are
+sometimes masked by the fact that certain online messaging operations are
+actually being done on ostensibly "local" archive folders via a remote
+file system protocol.  Note that if one could depend on having a generic
+remote file access protocol pervasively available, one wouldn't need POP
+at all...
+
+Because POP was never designed to be an online messaging protocol, it is 
+not surprising that it lacks critical functionality in this area.  The
+requirements for disconnected operation are a strict superset of online
+access functional needs, so POP also lacks the abilities to be a superior
+disconnected messaging protocol, even though the latest POP specification 
+includes provision for unique and persistent message identifiers, an essential
+ingredient for disconnected operation. 
+
+
+VII. IMAP ADVANTAGES
+
+The functional areas where POP is weak, with respect to
+online/disconnected operation, are strengths for IMAP, since online access
+was its original design center.  Specific advantages of IMAP over POP (for
+online/disconnected use) include: 
+
+Remote Folder Manipulation:
+ o Ability to append messages to a remote folder.
+ o Ability to set standard and user-defined message status flags.
+ o Support for simultaneous update and update discovery in shared folders.
+ o New mail notification.
+
+Multiple folder support:
+ o Ability to manipulate remote folders other than INBOX.
+ o Remote folder management (list/create/delete/rename).
+ o Support for folder hierarchies.
+ o Suitable for accessing non-email data; e.g., NetNews, documents.
+
+Online performance optimization:
+ o Provision for determining message structure without downloading entire msg.
+ o Selective fetching of individual MIME body parts.
+ o Server-based searching and selection to minimize data transfer.
+
+In addition, IMAP has provision for negotiated extensions, and therefore 
+its capabilities can grow incrementally.
+
+Implications of remote folder manipulation abilities...
+
+The ability to "append messages to a remote folder" means that you can
+save messages to an archive folder, or even from an archive folder back to
+one's inbox.  Saving messages is central to message management. 
+
+The ability to "set standard and user-defined message status flags" means
+that the mail client program can record status information about
+particular messages; for example, the fact that it has been answered, or
+marked important by the user, or marked deleted. IMAP allows for
+user-defined status flags, as well as a small set of standard flags. 
+
+"Support for simultaneous update and update discovery in shared folders" is
+important in situations where several people are handling incoming messages to
+the same mailbox.  For example, a help desk may have several people processing
+requests coming into a single mailbox.  This requirement has implications for
+both the message access protocol and the mailbox format.  In particular, the
+mailbox format must permit concurrent status flag updates from different
+sessions, and the message access protocol must provide for notification of each
+user session when a status flag changes.  IMAP differs from many client-server
+protocols in that the responses from a server may not be a direct result of
+requests from one's own client; the server must be able to send "unsolicited"
+data to any client to inform it of mailbox state changes.  Note that in
+practice, shared folder support also requires that the protocol permit access
+to multiple folders. 
+
+Another example of mailbox state change is "new mail notification".  In
+IMAP, when a client program performs any operation on a mailbox, the
+server will automatically include in its response notification of any new
+messages that have arrived since the last notification. 
+
+Implications of multiple folder support...
+
+A key objective of online and disconnected operation is to support message 
+access from different computers at different times.  This includes knowledge
+workers with one computer in the office and a different one at home, as well
+as "nomadic" students who must rely on lab machines which do not have any 
+local per-user storage.
+
+Thus, the ability to "manipulate remote folders other than INBOX" is
+fundamental to online and disconnected operation.  This means being able
+to save messages from one folder to a different one, being able to access
+archived messages subsequently, and allowing for multiple incoming message
+folders.  Accessing "multiple incoming message folders" is useful for
+people who have partitioned their incoming mail streams, either via
+delivery filters, or by having different accounts for different purposes. 
+The same protocol issues that argue for the online or disconnected access
+model for one's INBOX also apply to other message folders, be they
+"incoming" or "archive". 
+
+"Remote folder management (list/create/delete/rename)" follows from the
+need to access and manipulate more than one folder.  In IMAP version 4,
+there is also "support for folder hierarchies", which allows nesting
+collections of folders.  This has protocol implications because the client
+mail program must be able to distinguish directory names from folder
+names. 
+
+One additional benefit of IMAP is that it is "suitable for accessing 
+non-email data; e.g., NetNews, documents".  This capability is 
+attractive in cases where it is desirable to unify different categories 
+of information.
+
+Note that, depending on the IMAP client implementation and the mail
+architecture desired by a system manager, the user may save messages
+locally on the client machine, or save them on the server, or be given
+the choice of doing either. 
+
+Implications of online performance optimization...
+
+Whenever the mail client is connected to the mail server, in either online
+mode or during cache resynchronization in disconnected mode, there is an
+issue of network latency --exacerbated when the link speed between client
+and server is low.  IMAP provides several facilities that can be used
+to dramatically reduce the data transmitted between client and server.
+
+First, there is "provision for determining message structure without
+downloading entire message".  This allows the mail client to display
+information about MIME message attachments without transferring them.
+
+Moreover, "selective fetching of individual MIME body parts" means that if
+someone sends you a two line text message with a 10MB video clip attached,
+your mail client can choose to transfer only the two lines of text until
+you specifically request the attachment.  If connected via dialup from a
+hotel room, this can be an enormous benefit. Efficient processing of MIME
+messages is a significant benefit of IMAP over POP.  (MIME stands for
+Multipurpose Internet Mail Extensions.  It is a technique for encoding
+arbitrary files as attachments to SMTP and RFC-822 compatible Internet
+mail messages.)  In the same vein, IMAP4 also provides for selective retrieval
+of specific message headers.
+
+Finally, the ability of IMAP software to use "server-based searching and
+selection to minimize data transfer" should not be underestimated.  This
+is one of the key advantages of an application-specific messaging protocol
+in comparison to a general purpose file access protocol (or POP in
+pseudo-online mode, for that matter).  When the client-server protocol
+does not include primitives to ask the server to do searching, then
+searching implies transferring all of the data over the net to the client. 
+Being able to ask the server to find relevant messages by searching its
+local file is a huge win. 
+
+
+VIII. IMAP DISADVANTAGES
+
+IMAP has two disadvantages when compared to POP:
+
+ o The protocol is more complex, and requires more effort to implement.
+ o There is currently less IMAP software available than POP software.
+
+Obviously IMAP is more complex because it does more, but the complexity
+concern is mitigated by two factors: first, depending on the objectives of
+the client, one may not need to use all of the functionality available.
+For example, one of the earliest IMAP clients was POPmail from the
+University of Minnesota.  It offers only offline support, via both POP and
+IMAP, but it is likely that the author found that the complexity of
+implementing offline support via IMAP was roughly the same as for POP. A
+second mitigating factor is the existence of freely available support
+libraries which implement the IMAP protocol details.  An example is the
+c-client library from the University of Washington. 
+
+While it is still true that POP enjoys broader vendor support than IMAP,
+there is already a substantial list of IMAP software (see the REFERENCES
+section), and many POP software vendors are working to add IMAP support as
+soon as possible.  At the moment there are 20 different IMAP clients
+available, and at least seven more in development.  
+
+
+IX. SOME OBJECTIONS ANSWERED
+
+There is a common misconception that IMAP implies centralized computing.
+This is usually said in the context of how powerful personal computers are
+now and therefore how irrelevant central computing has become.  Regardless
+of one's politics or religion on the subject of central computing, this
+issue has nothing to do with IMAP.  In fact, IMAP may be used with
+personal, workgroup, departmental, or enterprise-wide servers.  Once the
+policy decision has been made on where one's message data will live, the
+relevant question is: which protocol will be used to access it from
+*other* machines?  And for most folks, there will be "other" machines: a
+diminishing fraction of computer users will go through life using a single
+computer in all situations. 
+
+It has been said that POP is sufficient and IMAP is not worthwhile because it
+only addresses remote access to message objects, and clearly there are other
+classes of data to which one might want remote access.  It is certainly true
+that IMAP is not a panacea for all remote data access, on the other hand, there
+is no evidence that the world is converging on a single general-purpose remote
+file access protocol.  Neither Sun's NFS, Transarc's AFS, OSF's DFS, Apple's
+AFP, Microsoft's SMB, nor Novell's NCP are now, nor are likely to become,
+universal platform-independent remote file access protocols.  Even if a single
+protocol did meet this need, there are still performance reasons to consider
+application-specific protocols. Also, certain file/object locking problems that
+are inevitable in a real-time messaging environment are often easier to solve
+in an application-specific protocol.  One of the ironies of the "POP is
+sufficient because IMAP doesn't do everything"  argument is that if one
+postulates the existence of a pervasive remote file-access protocol, then POP
+is no longer needed either. 
+
+A variation on the same theme is the hypothesis that eventually everyone will
+carry all of their personal files with them, so that remote access to anything
+other than a single mail drop is unnecessary.  While carrying cache copies of
+relevant data with you is clearly useful, one wonders how many people would
+choose to have the data set on their person be their *primary* copy.  The
+thought of losing one's email at the same time one loses keys, etc, is most
+unsettling, so the author certainly would not... but we have a few more years
+before storage technology advances even make the question relevant. Moreover,
+it seems just as plausible to believe that wireless technologies will keep one
+connected at all times and obviate the need for any on-person storage, in which
+case remote access protocols that will perform well for key applications over
+low-speed links may become even more vital. 
+
+Some have observed that no mail application protocol can keep up with
+ever-growing needs driven by increasingly sophisticated mail client programs. 
+They argue that defining a language, in which to write programs to be executed
+on the mail server, is the only way to provide sufficient generality for
+changing client needs.  In other words, any fixed protocol --even one with
+negotiated extensibility features such as IMAP has-- will soon be obsolete. 
+The counter-argument is that opening up the server to executing any program
+that can be expressed in the candidate language is a system manager's
+nightmare, since it makes it much more difficult to maintain consistent
+response times or plan for growth.  Also, use of open-ended macro facilities
+can lead to architectural conflicts. Even with protocols that permit downloaded
+code, one is constrained by the primatives available on the server and the
+model that the protocol imposes.  For example, if a protocol allows the text of
+a message to be modified, then a client cannot reasonably cache the message
+text.  In other words, protocol generality is sometimes over-rated, and having
+a relatively fixed set of application-specific functions in the protocol is
+often considered a feature rather than an unfortunate limitation. 
+
+An important recent trend is the advent of the World Wide Web, and with it
+the Hypertext Transport Protocol (HTTP).  Might not HTTP obsolete IMAP? 
+It seems to us much more likely that the two will coexist to mutual
+advantage.  The designers of the Web wisely decided to exploit existing
+technologies and incorporate them into URL syntax, and provided hooks for
+external display tools and access methods.  IMAP and HTTP can both coexist
+and complement each other in that context.  And while some very
+interesting work has been done recently in allowing generic WWW browsers
+to access email via HTTP alone, IMAP's application-specific primitives
+still offer significant performance and functionality advantages over a
+pure HTTP approach. 
+
+Finally, one might ask: why not do both POP and IMAP?  Indeed, this
+strategy has been successfully adopted by many sites in order to provide
+the advantages of IMAP while maintaining compatibility with earlier mail
+user agents.  There are no particular technical barriers to providing both
+protocols on a mail server, as long as both daemons use compatible mailbox
+formats and file locking disciplines.  However, there may be non-technical
+reasons to support just one protocol: there are several mail user agents
+that support one or the other, but not both protocols; therefore, if both
+services are made available, client services staff must (as usual) bear
+the brunt of the diversity.  Where support resources are stretched thin,
+it may be necessary to pick one family of mailers rather than provide
+mediocre support to all of them. 
+
+
+X. CONCLUSIONS
+
+The two key points of this paper are that: 
+
+ o The "offline" message access paradigm is insufficient for contemporary 
+   needs; support for "online" and "disconnected" access is essential.
+
+ o In comparison to POP, IMAP offers equivalent "offline" support, and far 
+   superior support for "online" and "disconnected" operation.
+
+The key virtue of the offline message access paradigm is that it minimizes
+server connect time and server disk requirements.  However, offline mode
+works best for people who use a single client machine all the time; it is
+not well-suited for the goals of accessing one's incoming or saved-message
+folders from different machines at different times.  If one relies on a
+remote file system protocol to access message data on a different machine,
+this is really "online mode in disguise" --but without the advantages of
+an application-specific protocol tuned for online and disconnected 
+operation.
+
+IMAP is such an application-specific protocol; a client-server messaging
+protocol designed to permit manipulation of remote mailboxes as if they
+were local.  In addition to fully supporting the offline access paradigm,
+it offers capabilities that are essential for proper online message
+access, and which cannot be achieved with POP mailers unless they also use
+general file system protocols to provide location-independent access to
+message archives and message status information. 
+
+A reasonable conclusion is that the only advantage of POP over IMAP is
+that there is currently more POP software available.  However, this is
+changing rapidly, and IMAP's functional advantages over POP are nothing
+less than overwhelming. 
+
+
+XI. REFERENCES
+
+The original short note upon which this paper was based, "Comparing Two 
+Approaches to Remote Mailbox Access: IMAP vs. POP", may be found at this 
+URL:
+
+   ftp://ftp.cac.washington.edu/mail/imap.vs.pop.brief
+
+IMAP version 4 is defined in RFC-1730.  A URL for this RFC is:
+
+   ftp://ds.internic.net/rfc/rfc1730.txt
+
+Additional information on IMAP may be found at the following URLs:
+
+   ftp://ftp.cac.washington.edu/mail/imap.docs
+   ftp://ftp.cac.washington.edu/mail/imap.software
+
+Also available from the same directory are various pieces of IMAP
+software, including an IMAP server and also a POP server that, in addition
+to offering the normal POP service, can relay commands to an IMAP server,
+thus permitting existing POP clients to access an IMAP server. 
+
+There are currently some modifications to the POP specification being 
+considered by the IETF, but as of this writing, the latest 
+non-draft version of the POP specification is RFC-1725, available at:
+
+   ftp://ds.internic.net/rfc/rfc1725.txt
+
+---------------------------------------------------------------------------

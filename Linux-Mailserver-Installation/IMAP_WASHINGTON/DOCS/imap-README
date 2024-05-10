@@ -1,0 +1,10 @@
+The imap.tar.Z on this directory represents a snapshot of my development
+sources.  It is updated very frequently.
+
+At the time of this writing (8 July 1999), it points to the beta
+imap-4.6.BETA.tar.Z.
+
+Old, permanently-frozen versions of the IMAP toolkit are on the old/
+subdirectory.  In many cases, these match what were distributed with a
+Pine release; for example, imap-4.5 was distributed with Pine 4.10.
+Note that all permanently-frozen versions have known bugs.

@@ -1,0 +1,11 @@
+$TTL	86400
+
+@	IN	SOA	blackwood.organicbrownsugar.com.	hostmaster.blackwood.organicbrownsugar.com. (
+				20001103001	;serial
+				10800		;refresh
+				1800		;retry
+				1209600		;expiry
+				604800 )	;minimum
+
+		IN	NS	email.organicbrownsugar.com.
+		IN	MX	10	email.organicbrownsugar.com.

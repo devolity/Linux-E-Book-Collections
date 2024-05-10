@@ -1,0 +1,137 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+ <META NAME="GENERATOR" CONTENT="SGML-Tools 1.0.9">
+ <TITLE>LDAP Linux HOWTO: Introduction</TITLE>
+ <LINK HREF="LDAP-HOWTO-2.html" REL=next>
+
+ <LINK HREF="LDAP-HOWTO.html#toc1" REL=contents>
+</HEAD>
+<BODY>
+<A HREF="LDAP-HOWTO-2.html">Next</A>
+Previous
+<A HREF="LDAP-HOWTO.html#toc1">Contents</A>
+<HR>
+<H2><A NAME="s1">1. Introduction</A></H2>
+
+<P>The main purpose of this document is to setup and use a LDAP Directory Server on your Linux machine.You will learn how to install, configure, run and maintain the LDAP server. After you also learn how you can store, retrieve and update information on your Directory using the LDAP clients and utilities.
+The daemon for the LDAP directory server is called <I>slapd</I> and it runs on many different UNIX platforms. 
+<P>There is another daemon that cares for replication between LDAP servers. It's called <I>slurpd</I> and for the moment you don't need to worry about it. In this document you run a slapd which provides directory service for your local domain only, without replication, so without slurpd. 
+<P>This is a simple configuration for the server, good for starting but easy to upgrade to another configuration later if you want.
+The information presented on this document represents a nice initialization on using the LDAP protocol. Possibly after reading this document you would feel encouraged to expand the capabilities of your server and even write your own clients, using the already avaiable C, C++ and Java Development Kits.
+<P>
+<H2><A NAME="ss1.1">1.1 What's LDAP ?</A>
+</H2>
+
+<P>LDAP is a client-server protocol for accessing a directory service.
+It was initially used as a front-end to X.500, but can also be used with stand-alone and other kinds of directory servers.
+<P>
+<H2><A NAME="ss1.2">1.2 What's a Directory Service ?</A>
+</H2>
+
+<P>A directory is like a database, but tends to contain more descriptive, attribute-based information. The information in a directory is generally read much more often than it is written. As a consequence, directories don't usually implement the complicated transaction or roll-back schemes that regular databases use for doing high-volume complex updates. Directory updates are typically simple all-or-nothing changes, if they are allowed at all. 
+<P>Directories are tuned to give quick-response to high-volume lookup or search operations. They may have the ability to replicate information widely in order to increase availability and reliability, while reducing response time. When directory information is replicated, temporary inconsistencies between the replicas may be OK, as long as they get in sync eventually.
+<P>There are many different ways to provide a directory service. Different methods allow different kinds of information to be stored in the directory, place different requirements on how that
+information can be referenced, queried and updated, how it is protected from unauthorized access, etc. Some directory services are local, providing service to a restricted context (e.g., the finger service on a single machine). Other services are global, providing service to a much broader context.
+<P>
+<H2><A NAME="ss1.3">1.3 How does LDAP work ?</A>
+</H2>
+
+<P>LDAP directory service is based on a client-server model. One or more LDAP servers contain the data making up the LDAP directory tree or LDAP backend database. An LDAP client connects to an LDAP server and asks it a question. The server responds with the answer, or with a pointer to where the client can get more information (typically, another LDAP server). No matter which LDAP server a client connects to, it sees the same view of the directory; a name presented to one LDAP server references the same entry it would at another LDAP server. This is an important feature of a global directory service, like LDAP.
+<P>
+<H2><A NAME="ss1.4">1.4 LDAP backends, objects and attributes</A>
+</H2>
+
+<P>Slapd comes with three different backend databases you can choose from. They are LDBM, a high-performance disk-based database; SHELL, a database interface to arbitrary UNIX commands or shell scripts; and PASSWD, a simple password file database.
+<P>In this document I assume that you choose the LDBM database.
+<P>The LDBM database works by assigning a compact four-byte unique identifier to each entry in the database. It uses this identifier to refer to entries in indexes. The database consists of one
+main index file, called id2entry, which maps from an entry's unique identifier (EID) to a text representation of the entry itself. Other index files are maintained as well.
+<P>To import and export directory information between LDAP-based directory servers, or to describe a set of changes which are to be applied to a directory, the file format known as LDIF, for LDAP Data Interchange Format, is typically used. An LDIF file stores information in object-oriented hierarchies of entries. The LDAP software package you're going to get comes with an utility to convert LDIF files to the LDBM format
+<P>A common LDIF file looks like this :
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+dn: o=TUDelft, c=NL
+o: TUDelft
+objectclass: organization
+dn: cn=Luiz Malere, o=TUDelft, c=NL
+cn: Luiz Malere
+sn: Malere
+mail: malere@yahoo.com
+objectclass: person
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>As you can see each entry is uniquely identified by a distinguished name, or DN. the DN consists of the name of the entry plus a path of names tracing the entry back to the top of the directory hierarchy.
+<P>In LDAP, an object class defines the collection of attributes that can
+be used to define an entry. The LDAP standard provides these basic types
+of object classes:
+<UL>
+<LI>Groups in the directory, including unordered lists of individual objects or groups of objects.</LI>
+<LI>Locations, such as the country name and description.</LI>
+<LI>Organizations in the directory.</LI>
+<LI>People in the directory.</LI>
+</UL>
+<P>An entry can belong to more than one object class. For example, the entry for a person is defined by the <I>person</I> object class, but may also be defined by attributes in the inetOrgPerson, groupOfNames, and organization objectclasses. The server's object class structure (its schema) determines the total list of required and allowed attributes for a particular entry.
+<P>Directory data is represented as attribute-value pairs. Any specific piece of information is associated with a descriptive attribute.
+<P>For instance, the commonName, or cn, attribute is used to store a person's name. A person named Jonas Salk can be represented in the directory as
+<BLOCKQUOTE><CODE>
+<PRE>
+cn: Jonas Salk
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>Each person entered in the directory is defined by the collection of attributes in the <I>person</I> object class. Other attributes used to define this entry could include:
+<BLOCKQUOTE><CODE>
+<PRE>
+givenname: Jonas
+surname: Salk
+mail: jonass@airius.com
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>Required attributes include the attributes that must be present in entries using the object class. All entries require the objectClass attribute, which lists the object classes to which an entry belongs.
+<P>Allowed attributes include the attributes that may be present in entries using the object class. For example, in the person object class, the cn and sn attributes are required. The description, telephoneNumber, seeAlso, and userpassword attributes are allowed but are not required.
+<P>Each attribute has a corresponding syntax definition. The syntax definition describes the type of information provided by the attribute :
+<UL>
+<LI>bin binary</LI>
+<LI>ces case exact string (case must match during comparisons)</LI>
+<LI>cis case ignore string (case is ignored during comparisons)</LI>
+<LI>tel telephone number string (like cis but blanks and dashes `- ' are ignored during comparisons)</LI>
+<LI>dn distinguished name</LI>
+</UL>
+<P> 
+Go to the first paragraph of 
+<A HREF="LDAP-HOWTO-3.html#3">section 3</A> to know where the objectclass and attribute definitions lay on your system.
+<P>
+<H2><A NAME="ss1.5">1.5 New Versions of this Document</A>
+</H2>
+
+<P>This document may receive corrections and updates based on the feedback received by the readers. You should look at :
+<P>
+<A HREF="http://dutedin.et.tudelft.nl/~malere/LDAP-Linux-HOWTO.html">http://dutedin.et.tudelft.nl/~malere/LDAP-Linux-HOWTO.html</A><P>for new versions of this HOWTO.
+<P>
+<H2><A NAME="ss1.6">1.6 Opinions and Sugestions</A>
+</H2>
+
+<P>If you have any kind of doubt about some information avaiable on this document,please contact me on the following email address :
+<P>
+<A HREF="mailto:malere@yahoo.com">malere@yahoo.com</A><P>If you have commentaries and/or sugestions, please let me know too !
+<P>
+<H2><A NAME="ss1.7">1.7 Acknowledgments</A>
+</H2>
+
+<P>This Howto was result of an internship made by me on the TUDelft University - Netherlands. I would like to thank the persons that encouraged me to write this document : Rene van Leuken and Wim Tiwon. Thank you very much. They are also Linux fans, just like me.
+<P>
+<H2><A NAME="ss1.8">1.8 Copyright and Disclaimer</A>
+</H2>
+
+<P>The LDAP Linux HOWTO is Copyrighted 1999 by Luiz Ernesto Pinheiro Malere. It can be distributed freely. It cannot be modified. If you have any kind of sugestion, please send me an email (I will update the document if the sugestion proceeds).
+<P>If you want a translation, for example to Portuguese, you can send me an email about it too.
+<P>No liability for the contents of this document can be accepted. I have no responsability about the consequences of following the steps provided in this document.
+<P>If you have questions, please contact, the Linux HOWTO coordinator, at
+<P>
+<A HREF="linux-howto@metalab.unc.edu">linux-howto@metalab.unc.edu</A><P>
+<HR>
+<A HREF="LDAP-HOWTO-2.html">Next</A>
+Previous
+<A HREF="LDAP-HOWTO.html#toc1">Contents</A>
+</BODY>
+</HTML>

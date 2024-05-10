@@ -1,0 +1,4 @@
+Known errors in RFC 2061 as of 19 March 1997:
+
+1) It is not mentioned that the <start.finish> syntax is not available in
+   IMAP2bis.

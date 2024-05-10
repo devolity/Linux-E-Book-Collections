@@ -1,0 +1,16 @@
+$TTL	86400
+
+.       IN      SOA     email.organicbrownsugar.com. root.email.organicbrownsugar.com.  (
+                                      2000110801 ; Serial
+                                      28800      ; Refresh
+                                      14400      ; Retry
+                                      3600000    ; Expire
+                                      86400 )    ; Minimum
+
+			IN	NS	email.organicbrownsugar.com.
+
+email.organicbrownsugar.com.		IN	A	192.10.1.10
+
+;These are all the domains we are hosting
+organicbrownsugar.com.			IN	NS	email.organicbrownsugar.com.
+blackwood.organicbrownsugar.com.	IN	NS	email.organicbrownsugar.com.

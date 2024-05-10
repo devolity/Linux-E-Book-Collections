@@ -1,0 +1,7 @@
+dn: o=Organic Brown Sugar, c=US
+objectclass: organization
+o: Organic Brown Sugar
+
+dn: ou=Blackwood, o=Organic Brown Sugar, c=US
+objectclass: organizationalUnit
+ou: Blackwood

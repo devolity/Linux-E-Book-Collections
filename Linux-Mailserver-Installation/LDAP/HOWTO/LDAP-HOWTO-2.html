@@ -1,0 +1,131 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+ <META NAME="GENERATOR" CONTENT="SGML-Tools 1.0.9">
+ <TITLE>LDAP Linux HOWTO: Installing the LDAP Server</TITLE>
+ <LINK HREF="LDAP-HOWTO-3.html" REL=next>
+ <LINK HREF="LDAP-HOWTO-1.html" REL=previous>
+ <LINK HREF="LDAP-HOWTO.html#toc2" REL=contents>
+</HEAD>
+<BODY>
+<A HREF="LDAP-HOWTO-3.html">Next</A>
+<A HREF="LDAP-HOWTO-1.html">Previous</A>
+<A HREF="LDAP-HOWTO.html#toc2">Contents</A>
+<HR>
+<H2><A NAME="s2">2. Installing the LDAP Server</A></H2>
+
+<P>Four steps are necessary to install the server : Download the package, Unpack the software, Configure the Makefiles and Build the server. 
+<P>
+<H2><A NAME="ss2.1">2.1 Downloading the package</A>
+</H2>
+
+<P>There are two free distributed LDAP servers : University of Michigan LDAP server and OpenLDAP server. There's also the Netscape Directory Server, which is free only under
+some conditions (educational institutions get it free, for example).The OpenLDAP server is based on the latest version of the University of Michigan Server and there are mailing
+lists and aditional documentation avaiable for it. This document supposes that you are using the OpenLDAP server. 
+<P>It's latest tar gziped version is avaiable on the following address : 
+<P>
+<A HREF="http://www.openldap.org">http://www.openldap.org</A><P>If you want to get the latest version of University of Michigan Server, go to this address : 
+<P>
+<A HREF="ftp://terminator.rs.itd.umich.edu/ldap">ftp://terminator.rs.itd.umich.edu/ldap</A><P>To write this document, I used the OpenLDAP latest stable version and OpenLDAP 1.2.8 on a Slackware Linux machine with kernel 2.2.6. On the OpenLDAP site you can find the latest development and stable versions of the OpenLDAP server. By the time this document was updated, the latest stable version was openldap-stable-990918.tgz, also available through the link openldap-stable.tgz. The latest development version was openldap-1_2_8.tgz. 
+<P>
+<H2><A NAME="ss2.2">2.2 Unpacking the server</A>
+</H2>
+
+<P>Now that you have the tar gziped package on your local machine you can unpack it. 
+<P>First copy the package to a desirable directory, for example /usr/local. 
+<P>Then use the following command : 
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+tar xvzf openldap-stable.tgz 
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>You can use this command too, as well : 
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+gunzip openldap-stable.tgz | tar xvf - 
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>
+<H2><A NAME="ss2.3">2.3 Configuring the software</A>
+</H2>
+
+<P>There are several options that you should like to customize so you can build the best software to your site. 
+<P>To configure the software you just need 2 steps : 
+<UL>
+<LI>Edit the file <I>ldapconfig.h.edit</I>, located on the subdirectory <I>include</I> beneath the directory where you unpacked the software. </LI>
+<LI>Run the configure script (if you are a tough guy, you can also edit the Make-common file
+instead of running the configure script :^) </LI>
+</UL>
+<P>In the file include/ldapconfig.h.edit you can set options like the location of the slapd and slurpd daemons. The file itself is well commented and it's default settings also reflect the
+most common administrator choices so, if you are in a hurry you can skip this step, and run directly: 
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+vi include/ldapconfig.h.edit 
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>The OpenLDAP server sources are distributed with a configuration script for setting options like instalation directories, compiler and linker flags. Type the following command on
+the directory where you unpacked the software : 
+<BLOCKQUOTE><CODE>
+<PRE>
+./configure --help 
+</PRE>
+</CODE></BLOCKQUOTE>
+
+This will print all options that you can customize with the configure script before you build the software. Some usefull options are --prefix=pref , --exec-prefix=eprefix and
+--bindir=dir, for setting instalation directories. Normally if you run configure without options, it will auto-detect the appropriate settings and prepar to build things on the default
+common location. So just type : 
+<BLOCKQUOTE><CODE>
+<PRE>
+./configure 
+</PRE>
+</CODE></BLOCKQUOTE>
+
+And watch the output to see if all went well 
+<P>
+<H2><A NAME="ss2.4">2.4 Building the server</A>
+</H2>
+
+<P>After configuring the software you can start building it. First build the dependencies, using the command : 
+<BLOCKQUOTE><CODE>
+<PRE>
+make depend 
+</PRE>
+</CODE></BLOCKQUOTE>
+
+After build the server, using the command : 
+<BLOCKQUOTE><CODE>
+<PRE>
+make 
+</PRE>
+</CODE></BLOCKQUOTE>
+
+If all goes well, the server will build as configured.  If not, return to the previous step to review the configuration settings. You should check the platform specific hints, they are
+located in the path doc/install/hints under the directory you unpacked the software. 
+<P>Now install the binaries and man pages.  You may need to be superuser to do this (depending on where you are installing things): 
+<BLOCKQUOTE><CODE>
+<PRE>
+su 
+make install 
+</PRE>
+</CODE></BLOCKQUOTE>
+
+That's all, now you have the binary of the server and the binaries of several other utilities. Go to the 
+<A HREF="LDAP-HOWTO-3.html#3">next</A> section to see how to configure the operation of your LDAP server. 
+<P>
+<P>If before learning how to configure your LDAP server you would like to test the recently built binaries, the latest versions of the OpenLDAP server come with a test script. When this document was updated the test script was not 100% stable for all diagnostics that it performed. Anyway you can try to run it and, if anything goes wrong with the script you can just abort it hitting Ctrl-C. In my case before the script stopped working I could see some successfull messages about the results of the most common diagnostics. To run the test script, go to the subdirectory <CODE>/test</CODE> beneath the path where you unpacked the software and type : 
+<BLOCKQUOTE><CODE>
+<PRE>
+make
+</PRE>
+</CODE></BLOCKQUOTE>
+   
+<P>
+<HR>
+<A HREF="LDAP-HOWTO-3.html">Next</A>
+<A HREF="LDAP-HOWTO-1.html">Previous</A>
+<A HREF="LDAP-HOWTO.html#toc2">Contents</A>
+</BODY>
+</HTML>

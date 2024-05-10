@@ -1,0 +1,12 @@
+# Check quota and then turn it on
+	if [ -x /sbin/quotacheck ]
+		then
+			echo "Checking quotas ..."
+			/sbin/quotacheck -avug
+			echo "Done"
+		fi
+	if [ -x /sbin/quotaon ]
+		then
+			echo "Turning quota on ..."
+			/sbin/quotaon -avug
+		fi

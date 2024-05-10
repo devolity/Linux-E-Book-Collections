@@ -1,0 +1,10 @@
+$TTL	86400
+
+@	IN	SOA	2.10.192.in-addr.arpa.	hostmaster.blackwood.organicbrownsugar.com. (
+				20001103001
+				10800
+				1800
+				1209600
+				604800 )
+
+		IN	NS	email.organicbrownsugar.com.

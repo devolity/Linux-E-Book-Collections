@@ -1,0 +1,107 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+ <META NAME="GENERATOR" CONTENT="SGML-Tools 1.0.9">
+ <TITLE>LDAP Linux HOWTO: Running the LDAP Server</TITLE>
+ <LINK HREF="LDAP-HOWTO-5.html" REL=next>
+ <LINK HREF="LDAP-HOWTO-3.html" REL=previous>
+ <LINK HREF="LDAP-HOWTO.html#toc4" REL=contents>
+</HEAD>
+<BODY>
+<A HREF="LDAP-HOWTO-5.html">Next</A>
+<A HREF="LDAP-HOWTO-3.html">Previous</A>
+<A HREF="LDAP-HOWTO.html#toc4">Contents</A>
+<HR>
+<H2><A NAME="4"></A> <A NAME="s4">4. Running the LDAP Server</A></H2>
+
+<P>Slapd can be run in two different modes, stand-alone or from inetd(8). Stand-alone operation is recommended, especially if you are using the LDBM backend. This allows the
+backend to take advantage of caching and avoids concurrency problems with the LDBM index files. If you are running only a PASSWD or SHELL backend, running from inetd is an option. 
+<P>
+<H2><A NAME="4.1"></A> <A NAME="ss4.1">4.1 Command Line Options</A>
+</H2>
+
+<P>Slapd supports the following command-line options. 
+<P>-d &lt;level&gt; | ? 
+<BLOCKQUOTE><CODE>
+<PRE>
+This option sets the slapd debug level to &lt;level&gt;. When level is a `?' character, the various debugging 
+levels are printed and slapd exits, regardless of any other options you give it. Current debugging levels are 
+
+1 trace function calls 
+2 debug packet handling 
+4 heavy trace debugging 
+8 connection management 
+16 print out packets sent and received 
+32 search filter processing 
+64 configuration file processing 
+128 access control list processing 
+256 stats log connections/operations/results 
+512 stats log entries sent 
+1024 print communication with shell backends 
+2048 print entry parsing debugging 
+65535 enable all debugging 
+
+Debugging levels are additive. That is, if you want to trace function calls and watch the config file being
+processed, you would set level to the sum of those two levels (in this case, 65). Consult the &lt;ldap.h&gt; file
+for more details. 
+Note that slapd must have been compiled with -DLDAP_DEBUG defined for any debugging information beyond the 
+two stats levels to be available. 
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>-f &lt;filename&gt; 
+<BLOCKQUOTE><CODE>
+<PRE>
+This option specifies an alternate configuration file for slapd. 
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>-i 
+<BLOCKQUOTE><CODE>
+<PRE>
+This option tells slapd that it is running from inetd instead of as a stand-alone server. On the following section
+about running slapd from inetd you will find more details. 
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>-p &lt;port&gt; 
+<BLOCKQUOTE><CODE>
+<PRE>
+This option specifies an alternate TCP port on which slapd should listen for connections. The default port 
+is 389. 
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>
+<H2><A NAME="42"></A> <A NAME="ss4.2">4.2 Running slapd as a Stand Alone Daemon</A>
+</H2>
+
+<P>In general, slapd is run like this: 
+<P>$(ETCDIR)/slapd [&lt;option&gt;]* 
+<P>where ETCDIR has the value you gave in the Make-common file or configure script during the pre-build configuration, and &lt;option&gt; is one of the options described above.
+Unless you have specified a debugging level, slapd will automatically fork and detach itself from its controlling terminal and run in the background. Any of the options given above
+can be given to slapd to point it at a different configuration file, listen on another port, etc. 
+<P>See this example of starting slapd : 
+<P>$(ETCDIR)/slapd -f /home/malere/myslapd.conf -d 255 
+<P>
+<H2><A NAME="ss4.3">4.3 Running slapd from inetd</A>
+</H2>
+
+<P>First, make sure that running from inetd(8) is a good idea. If you are using the LDBM backend, it is not. If you are in a high-volume environment, the overhead of running from
+inetd also makes it a bad idea. Otherwise, you may proceed with the two steps necessary. 
+<P>Step 1 is to add a line like this to your /etc/services file: 
+<BLOCKQUOTE><CODE>
+<PRE>
+ldap 389 # ldap directory service 
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>Step 2 is to add a line like this to your /etc/inetd.conf file: 
+<BLOCKQUOTE><CODE>
+<PRE>
+ldap stream tcp nowait nobody $(ETCDIR)/slapd slapd -i 
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>where ETCDIR has the value you gave it in the Make-common file or configure script during pre-build configuration. Finally, send inetd a HUP signal, and you should be all set. 
+<P>
+<HR>
+<A HREF="LDAP-HOWTO-5.html">Next</A>
+<A HREF="LDAP-HOWTO-3.html">Previous</A>
+<A HREF="LDAP-HOWTO.html#toc4">Contents</A>
+</BODY>
+</HTML>

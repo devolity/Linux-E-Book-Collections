@@ -1,0 +1,4 @@
+dn: cn=Robin Hood,ou=Blackwood,o=Organic Brown Sugar,c=US
+changetype: modify
+add: telephonenumber
+telephonenumber: 23232323
